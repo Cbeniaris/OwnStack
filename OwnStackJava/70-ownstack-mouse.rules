@@ -1,0 +1,7 @@
+# OwnStack mouse and wireless dongle: let the logged-in user open the HID config interface.
+# The first rule covers a libusb based hidapi backend, the second one a hidraw based backend.
+# Product ID 0100 is the mouse (cable), 0101 is the wireless dongle.
+SUBSYSTEM=="usb", ATTR{idVendor}=="2fe3", ATTR{idProduct}=="0100", TAG+="uaccess"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2fe3", ATTRS{idProduct}=="0100", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTR{idVendor}=="2fe3", ATTR{idProduct}=="0101", TAG+="uaccess"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2fe3", ATTRS{idProduct}=="0101", TAG+="uaccess"
