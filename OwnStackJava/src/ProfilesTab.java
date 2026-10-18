@@ -353,7 +353,7 @@ public class ProfilesTab extends Tab {
         discardButton.setDisable(!dirty);
     }
 
-    /** The editor of one button: what it does (type) and what it does it with (value). */
+    // The editor of one button: what it does (type) and what it does it with (value). 
     private class BindingRow extends VBox {
 
         private final int slot;
