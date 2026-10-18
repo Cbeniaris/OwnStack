@@ -47,7 +47,7 @@ public class OwnStackApp extends Application {
         root.setCenter(tabs);
 
         stage.setTitle("Mouse Configuration");
-        stage.setScene(new Scene(root, 1000, 650));
+        stage.setScene(new Scene(root, 1100, 800));
         stage.show();
 
         session.connect();

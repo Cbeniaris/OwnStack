@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -12,7 +13,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
@@ -22,9 +22,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 /**
- * Profiles on the left, the mouse diagram in the middle, the editor for the selected profile
- * on the right. Edits are made on a copy and only reach the mouse when Apply is pressed;
- * Discard goes back to what was last read from (or written to) the mouse.
+ * Profiles on the left, the mouse diagram with the editor of every button around it in the
+ * middle, name and CPI above it and Apply / Discard below it. Edits are made on a copy and
+ * only reach the mouse when Apply is pressed; Discard goes back to what was last read from
+ * (or written to) the mouse.
  */
 public class ProfilesTab extends Tab {
 
@@ -56,7 +57,7 @@ public class ProfilesTab extends Tab {
     private final TextField nameField = new TextField();
     private final ComboBox<Integer> cpiBox = new ComboBox<>();
     private final BindingRow[] rows = new BindingRow[ProfileData.BINDING_COUNT];
-    private final VBox editor = new VBox(8);
+    private final HBox infoBar = new HBox(8);
     private final Button applyButton = new Button("Apply");
     private final Button discardButton = new Button("Discard");
 
@@ -107,7 +108,7 @@ public class ProfilesTab extends Tab {
         leftBox.setPadding(new Insets(10));
         leftBox.setPrefWidth(260);
 
-        // right: name, CPI and the buttons to program
+        // top: name and CPI
         nameField.setTextFormatter(new TextFormatter<String>(change -> {
             String text = change.getControlNewText();
 
@@ -146,31 +147,33 @@ public class ProfilesTab extends Tab {
             updateButtons();
         });
 
-        editor.getChildren().addAll(new Label("Name"), nameField, new Label("CPI"), cpiBox, new Label("Buttons"));
+        infoBar.getChildren().addAll(new Label("Name"), nameField, new Label("CPI"), cpiBox);
+        infoBar.setAlignment(Pos.CENTER_LEFT);
+        infoBar.setPadding(new Insets(10));
+        infoBar.setDisable(true);
 
+        // middle: the editor of every button sits in the diagram, next to its button
         for (int i = 0; i < rows.length; i++) {
             rows[i] = new BindingRow(i);
-            editor.getChildren().add(rows[i]);
+            rows[i].setDisable(true);
+            diagramPane.setSlotNode(i, rows[i]);
         }
 
-        editor.setPadding(new Insets(0, 10, 0, 0));
-        editor.setDisable(true);
-
-        ScrollPane scroll = new ScrollPane(editor);
-        scroll.setFitToWidth(true);
-
+        // bottom: apply and discard
         applyButton.setOnAction(event -> session.applyProfile(selectedIndex, current));
         discardButton.setOnAction(event -> discard());
 
-        VBox rightBox = new VBox(8, scroll, new HBox(6, applyButton, discardButton));
-        VBox.setVgrow(scroll, Priority.ALWAYS);
-        rightBox.setPadding(new Insets(10));
-        rightBox.setPrefWidth(290);
+        HBox buttonBar = new HBox(6, applyButton, discardButton);
+        buttonBar.setPadding(new Insets(10));
+
+        BorderPane centerPane = new BorderPane();
+        centerPane.setTop(infoBar);
+        centerPane.setCenter(diagramPane);
+        centerPane.setBottom(buttonBar);
 
         BorderPane root = new BorderPane();
         root.setLeft(leftBox);
-        root.setCenter(diagramPane);
-        root.setRight(rightBox);
+        root.setCenter(centerPane);
         setContent(root);
 
         session.addListener(this::refresh);
@@ -320,9 +323,15 @@ public class ProfilesTab extends Tab {
 
     // Fills the widgets from the edit copy (or clears and disables them if the slot is unused)
     private void loadEditor() {
-        editor.setDisable(current == null);
+        boolean unused = current == null;
 
-        if (current == null) {
+        infoBar.setDisable(unused);
+
+        for (BindingRow row : rows) {
+            row.setDisable(unused);
+        }
+
+        if (unused) {
             nameField.clear();
             cpiBox.setValue(null);
 
