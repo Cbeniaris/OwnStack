@@ -55,12 +55,12 @@ public class MacroData {
     private static final int OFFSET_REPEAT_DELAY = OFFSET_STEP_COUNT + 1;
     private static final int OFFSET_STEPS = OFFSET_REPEAT_DELAY + 2;
 
-    /** Whether a macro with this trigger repeats, and so uses its repeat delay. */
+    // Whether a macro with this trigger repeats, and so uses its repeat delay. 
     public static boolean usesRepeatDelay(int trigger) {
         return trigger == TRIGGER_WHILE_HELD || trigger == TRIGGER_TOGGLE;
     }
 
-    /** One step. Immutable: to change a step, replace it in the list. */
+    //One step. Immutable: to change a step, replace it in the list. 
     public static class Step {
         public final int type;
         public final int value;
@@ -148,7 +148,7 @@ public class MacroData {
     }
 
     /**
-     * @throws IllegalStateException if the macro cannot be written (see isValid) or is too long
+     @throws IllegalStateException if the macro cannot be written (see isValid) or is too long
      */
     public byte[] toBytes() {
         if (!isValid()) {
@@ -179,7 +179,7 @@ public class MacroData {
         return data;
     }
 
-    /** The name is 1 to 20 printable ASCII characters. */
+    // The name is 1 to 20 printable ASCII characters.
     public boolean isNameValid() {
         if (name == null || name.length() < 1 || name.length() > NAME_LENGTH) {
             return false;
@@ -196,7 +196,7 @@ public class MacroData {
         return true;
     }
 
-    /** A macro with steps needs a name. A macro without steps is cleared, so its name does not matter. */
+    // A macro with steps needs a name. A macro without steps is cleared, so its name does not matter.
     public boolean isValid() {
         return steps.isEmpty() || isNameValid();
     }

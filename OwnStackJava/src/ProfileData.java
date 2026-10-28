@@ -33,12 +33,12 @@ public class ProfileData {
     public final int[] types = new int[BINDING_COUNT];
     public final int[] values = new int[BINDING_COUNT];
 
-    /** Whether a binding of this type carries a value that the user has to choose. */
+    // Whether a binding of this type carries a value that the user has to choose.
     public static boolean needsValue(int type) {
         return type == TYPE_MOUSE_BUTTON || type == TYPE_KEY || type == TYPE_MACRO;
     }
 
-    /** Reads the zero terminated name at the start of a profile or macro object. */
+    // Reads the zero terminated name at the start of a profile or macro object. 
     public static String readName(byte[] object) {
         int length = 0;
 
@@ -89,7 +89,7 @@ public class ProfileData {
         return data;
     }
 
-    /** The name is 1 to 20 printable ASCII characters. */
+    // The name is 1 to 20 printable ASCII characters. 
     public boolean isNameValid() {
         if (name == null || name.length() < 1 || name.length() > NAME_LENGTH) {
             return false;
@@ -106,7 +106,7 @@ public class ProfileData {
         return true;
     }
 
-    /** Every binding whose type needs a value has one. */
+    // Every binding whose type needs a value has one. 
     public boolean isComplete() {
         for (int i = 0; i < BINDING_COUNT; i++) {
             if (needsValue(types[i]) && values[i] < 0) {

@@ -28,7 +28,7 @@ public class MouseSession implements AutoCloseable {
         public String[] macroNames;         // null where the macro has no steps
     }
 
-    /** One piece of work on the link thread. */
+    // One piece of work on the link thread.
     public interface IoTask<T> {
         T run(ProtocolClient client) throws IOException;
     }
@@ -60,12 +60,12 @@ public class MouseSession implements AutoCloseable {
         return status;
     }
 
-    /** The data last read from the mouse, or null before the first successful connection. */
+    // The data last read from the mouse, or null before the first successful connection. 
     public State getState() {
         return state;
     }
 
-    /** Registers something to run whenever the state changed. */
+    // Registers something to run whenever the state changed. 
     public void addListener(Runnable listener) {
         listeners.add(listener);
     }
@@ -76,7 +76,7 @@ public class MouseSession implements AutoCloseable {
         }
     }
 
-    /** Opens the link (cable first, then dongle) and reads everything from the mouse. */
+    // Opens the link (cable first, then dongle) and reads everything from the mouse. 
     public void connect() {
         submit("Connecting...", ignored -> {
             closeLink();
@@ -108,7 +108,7 @@ public class MouseSession implements AutoCloseable {
         submit(description, task, onSuccess, this::fail);
     }
 
-    /** Creates a profile in an unused slot (from the mouse's defaults) and reads it back. */
+    // Creates a profile in an unused slot (from the mouse's defaults) and reads it back. 
     public void createProfile(int index) {
         run("Creating profile...", c -> {
             c.createProfile(index);
@@ -137,7 +137,7 @@ public class MouseSession implements AutoCloseable {
         });
     }
 
-    /** Writes the profile to the mouse, then reads it back so the state shows what is stored. */
+    // Writes the profile to the mouse, then reads it back so the state shows what is stored. 
     public void applyProfile(int index, ProfileData profile) {
         byte[] bytes = profile.toBytes();
 
@@ -150,7 +150,7 @@ public class MouseSession implements AutoCloseable {
         });
     }
 
-    /** Reads the macro list again (names of the macros that have steps). */
+    // Reads the macro list again (names of the macros that have steps). 
     public void refreshMacros() {
         run("Reading macros...", c -> readMacroNames(c), names -> {
             state.macroNames = names;
@@ -252,7 +252,7 @@ public class MouseSession implements AutoCloseable {
         }
     }
 
-    /** Closes the link after the queued work is done. */
+    // Closes the link after the queued work is done. 
     @Override
     public void close() {
         executor.execute(this::closeLink);

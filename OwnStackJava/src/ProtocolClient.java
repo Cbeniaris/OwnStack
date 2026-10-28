@@ -67,7 +67,7 @@ public class ProtocolClient {
         }
     }
 
-    /** Contents of the INFO response. */
+    // Contents of the INFO response.
     public static class DeviceInfo {
         public int protocolVersion;
         public int role;
@@ -83,7 +83,7 @@ public class ProtocolClient {
         public int cpiStep;
     }
 
-    /** Contents of the PROFILE_LIST response. */
+    // Contents of the PROFILE_LIST response. 
     public static class ProfileList {
         public int activeIndex;
         public boolean[] exists;
@@ -201,7 +201,7 @@ public class ProtocolClient {
         request(OPCODE_PING, new byte[0]);
     }
 
-    /** Reads the device info. The result is kept, because the limits do not change. */
+    // Reads the device info. The result is kept, because the limits do not change. 
     public DeviceInfo info() throws IOException {
         if (cachedInfo != null) {
             return cachedInfo;
@@ -246,7 +246,7 @@ public class ProtocolClient {
         return list;
     }
 
-    /** Returns for every macro slot whether the macro has at least one step. */
+    // Returns for every macro slot whether the macro has at least one step. 
     public boolean[] macroList() throws IOException {
         int count = info().macroCount;
         byte[] data = request(OPCODE_MACRO_LIST, new byte[0]);
@@ -272,7 +272,7 @@ public class ProtocolClient {
         request(OPCODE_PROFILE_CREATE, new byte[] { (byte) index });
     }
 
-    /** Deletes a profile and returns the index of the profile that is active afterwards. */
+    // Deletes a profile and returns the index of the profile that is active afterwards. 
     public int deleteProfile(int index) throws IOException {
         byte[] data = request(OPCODE_PROFILE_DELETE, new byte[] { (byte) index });
         return data[0] & 0xFF;
