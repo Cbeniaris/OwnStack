@@ -46,6 +46,27 @@ K_MUTEX_DEFINE(requestMutex);
 // Uptime in milliseconds after which the waiting request is removed
 static int64_t requestDeadline = 0;
 
+/*
+ * Diagnostics. The counters below are filled by the Gazell receive callback and printed
+ * (then cleared) once per second by statsWork, only when something arrived in that second.
+ * The Gazell settings are printed at startup and again every RADIO_STATS_CONFIG_EVERY lines.
+*/
+#define RADIO_STATS_PERIOD_MS       1000
+#define RADIO_STATS_CONFIG_EVERY    20
+
+// Times the receive callback ran, and packets received by size
+static atomic_t statsCallbacks = ATOMIC_INIT(0);
+static atomic_t statsMouse = ATOMIC_INIT(0);
+static atomic_t statsKeyboard = ATOMIC_INIT(0);
+static atomic_t statsFrame = ATOMIC_INIT(0);
+
+// Packets of any other size (the mouse's one byte poll packets) and packets dropped because a queue was full
+static atomic_t statsOther = ATOMIC_INIT(0);
+static atomic_t statsDropped = ATOMIC_INIT(0);
+
+// Number of statistics lines printed so far, decides when the Gazell settings are printed again
+static uint32_t statsLinesPrinted = 0;
+
 // Removes the waiting request once its hold time is over
 static void radioRequestExpired(struct k_work *work)
 {
@@ -62,6 +83,57 @@ static void radioRequestExpired(struct k_work *work)
 }
 
 K_WORK_DELAYABLE_DEFINE(requestExpiryWork, radioRequestExpired);
+
+// the work item and its handler refer to each other, so the handler is declared first
+static void radioStatsReport(struct k_work *work);
+
+K_WORK_DELAYABLE_DEFINE(statsWork, radioStatsReport);
+
+// Prints the Gazell settings that decide how fast packets can be received
+static void radioPrintConfig(void)
+{
+    nrf_gzll_device_channel_selection_policy_t policy = nrf_gzll_get_device_channel_selection_policy();
+
+    printk("Gazell config: timeslot period=%u us, timeslots per channel=%u, out of sync=%u, sync lifetime=%u, max tx attempts=%u\n",
+           (unsigned int)nrf_gzll_get_timeslot_period(),
+           (unsigned int)nrf_gzll_get_timeslots_per_channel(),
+           (unsigned int)nrf_gzll_get_timeslots_per_channel_when_device_out_of_sync(),
+           (unsigned int)nrf_gzll_get_sync_lifetime(),
+           (unsigned int)nrf_gzll_get_max_tx_attempts());
+
+    printk("Gazell config: channel policy=%s, channels=%u, datarate=%d, tx power=%d\n",
+           (policy == NRF_GZLL_DEVICE_CHANNEL_SELECTION_POLICY_USE_CURRENT) ? "use current" : "use successful",
+           (unsigned int)nrf_gzll_get_channel_table_size(),
+           (int)nrf_gzll_get_datarate(),
+           (int)nrf_gzll_get_tx_power());
+}
+
+// Prints and clears the counters of the last second, then schedules itself again
+static void radioStatsReport(struct k_work *work)
+{
+    ARG_UNUSED(work);
+
+    unsigned int callbacks = (unsigned int)atomic_set(&statsCallbacks, 0);
+    unsigned int mouse = (unsigned int)atomic_set(&statsMouse, 0);
+    unsigned int keyboard = (unsigned int)atomic_set(&statsKeyboard, 0);
+    unsigned int frame = (unsigned int)atomic_set(&statsFrame, 0);
+    unsigned int other = (unsigned int)atomic_set(&statsOther, 0);
+    unsigned int dropped = (unsigned int)atomic_set(&statsDropped, 0);
+
+    // stay quiet while nothing is arriving
+    if ((callbacks | mouse | keyboard | frame | other | dropped) != 0) {
+        if ((statsLinesPrinted % RADIO_STATS_CONFIG_EVERY) == 0) {
+            radioPrintConfig();
+        }
+
+        statsLinesPrinted++;
+
+        printk("RADIO/s: callbacks=%u | mouse=%u keyboard=%u frame=%u other=%u | dropped=%u | mouseQueueUsed=%u\n",
+               callbacks, mouse, keyboard, frame, other, dropped, (unsigned int)k_msgq_num_used_get(&radioMsgq));
+    }
+
+    k_work_reschedule(&statsWork, K_MSEC(RADIO_STATS_PERIOD_MS));
+}
 
 int radioInit(void)
 {
@@ -87,6 +159,11 @@ int radioInit(void)
     }
 
     radioReady = true;
+
+    // print the Gazell settings once at startup and start the once-per-second report
+    radioPrintConfig();
+    k_work_schedule(&statsWork, K_MSEC(RADIO_STATS_PERIOD_MS));
+
     return 0;
 }
 
@@ -149,13 +226,30 @@ void nrf_gzll_host_rx_data_ready(uint32_t pipe, nrf_gzll_host_rx_info_t rxInfo)
     uint8_t payload[NRF_GZLL_CONST_MAX_PAYLOAD_LENGTH];
     uint32_t length = NRF_GZLL_CONST_MAX_PAYLOAD_LENGTH;
 
+    // diagnostics: one run of this callback
+    atomic_inc(&statsCallbacks);
+
     while (nrf_gzll_fetch_packet_from_rx_fifo(pipe, payload, &length)) {
         if (length == RADIO_REPORT_SIZE) {
-            k_msgq_put(&radioMsgq, payload, K_NO_WAIT);
+            atomic_inc(&statsMouse);
+
+            if (k_msgq_put(&radioMsgq, payload, K_NO_WAIT) != 0) {
+                atomic_inc(&statsDropped);
+            }
         } else if (length == RADIO_KEYBOARD_REPORT_SIZE) {
-            k_msgq_put(&radioKeyboardMsgq, payload, K_NO_WAIT);
+            atomic_inc(&statsKeyboard);
+
+            if (k_msgq_put(&radioKeyboardMsgq, payload, K_NO_WAIT) != 0) {
+                atomic_inc(&statsDropped);
+            }
         } else if (length == RADIO_FRAME_SIZE) {
-            k_msgq_put(&radioFrameMsgq, payload, K_NO_WAIT);
+            atomic_inc(&statsFrame);
+
+            if (k_msgq_put(&radioFrameMsgq, payload, K_NO_WAIT) != 0) {
+                atomic_inc(&statsDropped);
+            }
+        } else {
+            atomic_inc(&statsOther);
         }
 
         length = NRF_GZLL_CONST_MAX_PAYLOAD_LENGTH;

@@ -28,24 +28,24 @@ public class MouseDiagramPane extends Pane {
 
     // Highlight zone of every slot (index into ProfileData.SLOT_NAMES) as x, y pairs in image pixels
     private static final double[][] ZONES = {
-        { 282, 40, 378, 40, 378, 600, 282, 600 },       // left click
-        { 656, 40, 750, 40, 750, 600, 656, 600 },       // right click
-        { 485, 195, 560, 195, 560, 455, 485, 455 },     // middle click (the whole wheel)
-        { 232, 548, 280, 548, 280, 760, 232, 760 },     // side button 1 (front)
-        { 232, 760, 280, 760, 280, 975, 232, 975 },     // side button 2 (rear)
-        { 485, 195, 560, 195, 560, 325, 485, 325 },     // scroll up (upper half of the wheel)
-        { 485, 325, 560, 325, 560, 455, 485, 455 }      // scroll down (lower half of the wheel)
+        { 306, 34, 384, 34, 384, 438, 306, 438 },       // left click
+        { 704, 34, 784, 34, 784, 438, 704, 438 },       // right click
+        { 502, 100, 592, 100, 592, 435, 502, 435 },     // middle click (the whole wheel)
+        { 250, 500, 346, 500, 346, 712, 250, 712 },     // side button 1 (front)
+        { 250, 712, 346, 712, 346, 925, 250, 925 },     // side button 2 (rear)
+        { 502, 100, 592, 100, 592, 268, 502, 268 },     // scroll up (upper half of the wheel)
+        { 502, 268, 592, 268, 592, 435, 502, 435 }      // scroll down (lower half of the wheel)
     };
 
     // Where the leader line of every slot ends, as x, y in image pixels
     private static final double[][] ANCHORS = {
-        { 330, 120 },   // left click
-        { 704, 120 },   // right click
-        { 540, 290 },   // middle click
-        { 256, 650 },   // side button 1
-        { 256, 870 },   // side button 2
-        { 500, 250 },   // scroll up
-        { 540, 400 }    // scroll down
+        { 345, 150 },   // left click
+        { 744, 150 },   // right click
+        { 570, 268 },   // middle click
+        { 270, 556 },   // side button 1
+        { 270, 800 },   // side button 2
+        { 515, 190 },   // scroll up
+        { 570, 360 }    // scroll down
     };
 
     // Slots of each column, from top to bottom
